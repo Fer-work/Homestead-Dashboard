@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config(); // Ensure .env variables are loaded
 
 // It's better to ensure the MONGODB_URI includes the database name.
-// Example: "mongodb+srv://user:pass@cluster.id.mongodb.net/Homestead?retryWrites=true&w=majority"
+
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/Homestead";
 
 // Mongoose connection options
