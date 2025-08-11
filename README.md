@@ -1,8 +1,8 @@
-# Project: Sentient Homestead - Intelligent Monitoring System
+# Project: Dragon Natura Homestead - Intelligent Monitoring System
 
 ## 🌱 Vision
 
-Sentient Homestead is a comprehensive monitoring system designed for the modern homesteader aiming for self-sufficiency and a deeper connection with their environment and food production systems. This project starts with a passion for sustainable living and leveraging technology to make homestead management more efficient, data-driven, and insightful.
+Dragon Natura Homestead is a comprehensive monitoring system designed for the modern homesteader aiming for self-sufficiency and a deeper connection with their environment and food production systems. This project starts with a passion for sustainable living and leveraging technology to make homestead management more efficient, data-driven, and insightful.
 
 The initial goal is to develop a robust system for monitoring key aspects of a small-scale urban aquaponics prototype, with plans to expand to larger, more diverse homesteading operations. While this begins as a personal tool, the journey and the core monitoring framework will be documented with the hope of inspiring and assisting fellow homesteaders who are interested in integrating technology into their practices.
 
@@ -72,4 +72,4 @@ The system is designed with a layered approach:
 
 Currently, this is a personal project under development. However, I'm passionate about sharing knowledge and learning from the community. Future updates on progress and potential ways to collaborate or share designs will be posted if the project evolves in that direction.
 
-Stay tuned for updates as the Sentient Homestead takes root!
+Stay tuned for updates as the Dragon Natura Homestead takes root!

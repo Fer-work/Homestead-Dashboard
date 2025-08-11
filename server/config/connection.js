@@ -1,54 +1,37 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
+import { Sequelize } from "sequelize";
+import "dotenv/config";
 
-dotenv.config(); // Ensure .env variables are loaded
-
-// It's better to ensure the MONGODB_URI includes the database name.
-
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/Homestead";
-
-// Mongoose connection options
-const mongooseOptions = {
-  serverApi: {
-    version: mongoose.mongo.ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-};
-
-async function connectToDatabase() {
-  if (mongoose.connection.readyState >= 1) {
-    return;
-  }
-
-  try {
-    await mongoose.connect(uri, mongooseOptions);
-    console.log(
-      `Successfully connected to MongoDB database using Mongoose. Target URI implies database: ${mongoose.connection.name}`
-    ); // mongoose.connection.name will show the actual DB name.
-
-    mongoose.connection.on("error", (err) => {
-      console.error("Mongoose connection error:", err);
-    });
-
-    mongoose.connection.on("disconnected", () => {
-      console.log("Mongoose disconnected from MongoDB");
-    });
-
-    process.on("SIGINT", async () => {
-      await mongoose.connection.close();
-      console.log(
-        "Mongoose connection disconnected due to app termination (SIGINT)"
-      );
-      process.exit(0);
-    });
-  } catch (error) {
-    console.error(
-      "Could not connect to MongoDB using Mongoose:",
-      error.message
-    );
-    process.exit(1); // Crucial for preventing app run on DB connection failure
-  }
+// Ensure the DATABASE_URL is provided in your .env file
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is not set");
 }
 
-export { connectToDatabase };
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: "postgres",
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
+  logging: false,
+});
+
+/**
+ * Establishes a connection to the database by authenticating the sequelize instance.
+ * @returns {Promise<void>} A promise that resolves if the connection is successful,
+ * or rejects with an error if it fails.
+ */
+export const connectToDatabase = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("Database connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+    // Re-throw the error to be caught by the server startup logic
+    throw error;
+  }
+};
+
+// Export the sequelize instance for your models to use
+export default sequelize;

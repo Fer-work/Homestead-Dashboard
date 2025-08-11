@@ -3,8 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
-import routes from "./routes/index.js"; // Assuming this is your main router
-import { connectToDatabase } from "./config/connection.js";
+import routes from "./routes/index.js";
+// Import both the connection function AND the sequelize instance
+import sequelize, { connectToDatabase } from "./config/connection.js";
 
 // Configurations
 dotenv.config();
@@ -26,12 +27,17 @@ app.use(routes);
 // Database Connection and Server Start
 connectToDatabase()
   .then(() => {
+    // After connecting, synchronize the models with the database
+    // This will create the 'aquaponics_readings' table if it doesn't exist
+    return sequelize.sync({ alter: true }); // Use { alter: true } in dev to update tables
+  })
+  .then(() => {
     app.listen(PORT, () => {
-      console.log(`Homestead API Server listening on http://localhost:${PORT}`);
+      console.log(
+        `Database synced. Dragon Natura API Server listening on http://localhost:${PORT}`
+      );
     });
   })
   .catch((err) => {
-    console.log(
-      `Server startup failed due to database connection error: ${err.message}`
-    );
+    console.log(`Server startup failed: ${err.message}`);
   });

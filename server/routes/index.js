@@ -1,16 +1,24 @@
+// routes/index.js
+
 import { Router } from "express";
-import path from "path";
-import apiRoutes from "./api/index.js";
+
+// Import all your individual route files
+import dataIngestionRoutes from "./api/dataIngestionRoutes.js";
+import aquaponicsRoutes from "./api/aquaponicsRoutes.js";
+// import userRoutes from './api/userRoutes.js'; // etc.
 
 const router = Router();
 
-router.use("/api", apiRoutes);
+// This is the most important part.
+// It tells the main router to use the specific route files
+// for any path that starts with the given prefix.
+router.use("/api/ingest", dataIngestionRoutes);
+router.use("/api/aquaponics", aquaponicsRoutes);
+// router.use('/api/users', userRoutes);
 
-// This serves your React app's index.html for any non-API GET requests
-// It's the client-side routing catch-all for your SPA
-router.use((req, res) => {
-  // Assuming your client build output is in project_root/client/build
-  res.sendFile(path.join(process.cwd(), "client", "build", "index.html"));
+// A simple health-check route to make sure the router is working
+router.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "API is up and running!" });
 });
 
 export default router;
