@@ -24,20 +24,20 @@ const PORT = process.env.PORT || 3001;
 // Routes
 app.use(routes);
 
-// Database Connection and Server Start
-connectToDatabase()
-  .then(() => {
-    // After connecting, synchronize the models with the database
-    // This will create the 'aquaponics_readings' table if it doesn't exist
-    return sequelize.sync({ alter: true }); // Use { alter: true } in dev to update tables
-  })
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(
-        `Database synced. Dragon Natura API Server listening on http://localhost:${PORT}`
-      );
+// Start server first, then connect to database in background
+app.listen(PORT, () => {
+  console.log(`Dragon Natura API Server listening on http://localhost:${PORT}`);
+  
+  // Connect to database in background (non-blocking)
+  connectToDatabase()
+    .then(() => {
+      console.log("Database connected successfully");
+      return sequelize.sync({ alter: true });
+    })
+    .then(() => {
+      console.log("Database synced successfully");
+    })
+    .catch((err) => {
+      console.error(`Database connection failed: ${err.message}`);
     });
-  })
-  .catch((err) => {
-    console.log(`Server startup failed: ${err.message}`);
-  });
+});

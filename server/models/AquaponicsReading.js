@@ -21,7 +21,7 @@ const AquaponicsReading = sequelize.define(
       allowNull: false,
     },
     numeric_value: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     unit: {
@@ -33,6 +33,20 @@ const AquaponicsReading = sequelize.define(
     timestamps: true,
     updatedAt: false,
     createdAt: "created_at",
+    indexes: [
+      {
+        fields: ["sensor_id", "created_at"],
+        name: "idx_sensor_time"
+      },
+      {
+        fields: ["created_at"],
+        name: "idx_created_at"
+      },
+      {
+        fields: ["sensor_id", "type"],
+        name: "idx_sensor_type"
+      }
+    ]
   }
 );
 
