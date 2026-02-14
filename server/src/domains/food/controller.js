@@ -1,23 +1,15 @@
-// controllers/aquaponicsController.js
-
-// Correctly import the default export from the model file
-import AquaponicsReading from "../models/AquaponicsReading.js";
-import { Op, fn, col } from "sequelize";
-import sequelize from "../config/connection.js";
+import prisma from "../../shared/prismaClient.js";
 
 const getLatestWaterLevel = async (req, res) => {
   try {
-    const sensorId = "water_level_sump";
-
-    // Use the model's .findOne() method directly
-    const latestReading = await AquaponicsReading.findOne({
-      where: { sensor_id: sensorId },
-      order: [["created_at", "DESC"]],
+    const latestReading = await prisma.sensorReading.findFirst({
+      where: { sensorType: "WATER_LEVEL" },
+      orderBy: { recordedAt: "desc" },
     });
 
     if (!latestReading) {
       return res.status(404).json({
-        message: "No water level readings found for the specified sensor.",
+        message: "No water level readings found.",
       });
     }
 
@@ -33,17 +25,14 @@ const getLatestWaterLevel = async (req, res) => {
 
 const getAllWaterLevels = async (req, res) => {
   try {
-    const sensorId = "water_level_sump";
-
-    // Use the model's .findAll() method directly
-    const allReadings = await AquaponicsReading.findAll({
-      where: { sensor_id: sensorId },
-      order: [["created_at", "DESC"]],
+    const allReadings = await prisma.sensorReading.findMany({
+      where: { sensorType: "WATER_LEVEL" },
+      orderBy: { recordedAt: "desc" },
     });
 
-    if (!allReadings || allReadings.length === 0) {
+    if (allReadings.length === 0) {
       return res.status(404).json({
-        message: "No water level readings found for the specified sensor.",
+        message: "No water level readings found.",
       });
     }
 
@@ -59,21 +48,17 @@ const getAllWaterLevels = async (req, res) => {
 
 const getWaterLevelHistory = async (req, res) => {
   try {
-    const sensorId = "water_level_sump";
     const { hours = 24 } = req.query;
-    
     const startTime = new Date();
     startTime.setHours(startTime.getHours() - parseInt(hours));
 
-    const readings = await AquaponicsReading.findAll({
-      where: { 
-        sensor_id: sensorId,
-        created_at: {
-          [Op.gte]: startTime
-        }
+    const readings = await prisma.sensorReading.findMany({
+      where: {
+        sensorType: "WATER_LEVEL",
+        recordedAt: { gte: startTime },
       },
-      order: [["created_at", "ASC"]],
-      limit: 1000
+      orderBy: { recordedAt: "asc" },
+      take: 1000,
     });
 
     res.status(200).json({
@@ -83,8 +68,8 @@ const getWaterLevelHistory = async (req, res) => {
         count: readings.length,
         timeRange: `${hours} hours`,
         startTime: startTime.toISOString(),
-        endTime: new Date().toISOString()
-      }
+        endTime: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error("Error in getWaterLevelHistory controller:", error);
@@ -94,38 +79,31 @@ const getWaterLevelHistory = async (req, res) => {
 
 const getAquaponicsStats = async (req, res) => {
   try {
-    const sensorId = "water_level_sump";
-    
     const last24Hours = new Date();
     last24Hours.setHours(last24Hours.getHours() - 24);
 
-    // Get latest reading
-    const latest = await AquaponicsReading.findOne({
-      where: { sensor_id: sensorId },
-      order: [["created_at", "DESC"]]
+    const latest = await prisma.sensorReading.findFirst({
+      where: { sensorType: "WATER_LEVEL" },
+      orderBy: { recordedAt: "desc" },
     });
 
-    // Get recent readings for basic stats
-    const recentReadings = await AquaponicsReading.findAll({
-      where: { 
-        sensor_id: sensorId,
-        created_at: {
-          [Op.gte]: last24Hours
-        }
+    const recentReadings = await prisma.sensorReading.findMany({
+      where: {
+        sensorType: "WATER_LEVEL",
+        recordedAt: { gte: last24Hours },
       },
-      order: [["created_at", "DESC"]],
-      limit: 1000
+      orderBy: { recordedAt: "desc" },
+      take: 1000,
     });
 
-    // Calculate stats manually
     let stats = {};
     if (recentReadings.length > 0) {
-      const values = recentReadings.map(r => parseFloat(r.numeric_value));
+      const values = recentReadings.map((r) => r.value);
       stats = {
         min_level: Math.min(...values),
         max_level: Math.max(...values),
         avg_level: values.reduce((a, b) => a + b, 0) / values.length,
-        reading_count: values.length
+        reading_count: values.length,
       };
     }
 
@@ -134,11 +112,14 @@ const getAquaponicsStats = async (req, res) => {
       data: {
         current: latest,
         last24Hours: stats,
-        status: latest ? (
-          parseFloat(latest.numeric_value) < 20 ? 'low' : 
-          parseFloat(latest.numeric_value) > 140 ? 'high' : 'normal'
-        ) : 'unknown'
-      }
+        status: latest
+          ? latest.value < 20
+            ? "low"
+            : latest.value > 140
+              ? "high"
+              : "normal"
+          : "unknown",
+      },
     });
   } catch (error) {
     console.error("Error in getAquaponicsStats controller:", error);
@@ -146,4 +127,9 @@ const getAquaponicsStats = async (req, res) => {
   }
 };
 
-export { getLatestWaterLevel, getAllWaterLevels, getWaterLevelHistory, getAquaponicsStats };
+export {
+  getLatestWaterLevel,
+  getAllWaterLevels,
+  getWaterLevelHistory,
+  getAquaponicsStats,
+};

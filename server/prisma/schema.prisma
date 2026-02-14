@@ -1,0 +1,872 @@
+// Dragon Sovereign Homestead — Full ERD / Prisma Schema
+// 34 models across 7 sections covering all 6 homestead domains + auth
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Domain {
+  ENERGY
+  FOOD
+  WATER
+  COMMS
+  DEFENSE
+  WORKSHOP
+}
+
+enum DeviceType {
+  SENSOR
+  ACTUATOR
+  HYBRID
+  GATEWAY
+  CAMERA
+  ROVER
+  DRONE
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  MAINTENANCE
+}
+
+enum SensorType {
+  PH
+  TEMPERATURE
+  WATER_LEVEL
+  HUMIDITY
+  DISSOLVED_OXYGEN
+  EC_TDS
+  VOLTAGE
+  CURRENT
+  POWER
+  ENERGY
+  GAS_PRESSURE
+  GAS_FLOW
+  WIND_SPEED
+  WIND_DIRECTION
+  LIGHT_LEVEL
+  SOIL_MOISTURE
+  CO2
+  MOTION
+  VIBRATION
+  WEIGHT
+}
+
+enum CommandStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  EXECUTED
+  FAILED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+  EMERGENCY
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+  SILENCED
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum ThreatLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RoverStatus {
+  IDLE
+  PATROLLING
+  CHARGING
+  MAINTENANCE
+  ALERT_RESPONSE
+}
+
+enum DroneStatus {
+  GROUNDED
+  IN_FLIGHT
+  CHARGING
+  MAINTENANCE
+}
+
+enum DeterrentType {
+  LED
+  ACOUSTIC
+  FOG
+  VOICE
+  COMBINED
+}
+
+enum EquipmentType {
+  PRINTER_3D
+  CNC
+  LASER_CUTTER
+  WELDING
+  SOLDERING
+  OSCILLOSCOPE
+  POWER_SUPPLY
+  OTHER
+}
+
+enum InventoryCategory {
+  FILAMENT
+  METAL_STOCK
+  ELECTRONICS
+  FASTENERS
+  CHEMICALS
+  LUMBER
+  PIPE_FITTINGS
+  SALVAGE
+  OTHER
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+enum LoraRole {
+  GATEWAY
+  RELAY
+  ENDPOINT
+}
+
+// ============================================================================
+// CORE INFRASTRUCTURE — shared by all domains
+// ============================================================================
+
+/// Physical location hierarchy. Self-referencing parent/child.
+/// Property > Greenhouse > Fish Tank 1, etc.
+model Zone {
+  id        String   @id @default(cuid())
+  name      String
+  domain    Domain
+  parentId  String?
+  parent    Zone?    @relation("ZoneHierarchy", fields: [parentId], references: [id])
+  children  Zone[]   @relation("ZoneHierarchy")
+  latitude  Float?
+  longitude Float?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  devices            Device[]
+  alertRules         AlertRule[]
+  solarArrays        SolarArray[]
+  batteryBanks       BatteryBank[]
+  biogasDigesters    BiogasDigester[]
+  windTurbines       WindTurbine[]
+  aquaponicsSystems  AquaponicsSystem[]
+  foodForests        FoodForest[]
+  chickenCoops       ChickenCoop[]
+  verticalGardens    VerticalGarden[]
+  mushroomCultivations MushroomCultivation[]
+  rainwaterCisterns  RainwaterCistern[]
+  greywaterSystems   GreywaterSystem[]
+  biosandFilters     BiosandFilter[]
+  atmosphericWaterGens AtmosphericWaterGen[]
+  loraNodes          LoraNode[]
+  deterrentSystems   DeterrentSystem[]
+  workshopEquipment  WorkshopEquipment[]
+
+  @@map("zones")
+}
+
+/// Any IoT hardware: ESP32, RPi, sensor, actuator, camera, rover.
+model Device {
+  id              String       @id @default(cuid())
+  name            String
+  deviceType      DeviceType
+  status          DeviceStatus @default(ONLINE)
+  zoneId          String
+  zone            Zone         @relation(fields: [zoneId], references: [id])
+  macAddress      String?      @unique
+  mqttTopic       String?
+  firmwareVersion String?
+  metadata        Json?
+  lastSeenAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  sensorReadings    SensorReading[]
+  actuatorCommands  ActuatorCommand[]
+  alerts            Alert[]
+
+  @@index([zoneId])
+  @@index([status])
+  @@map("devices")
+}
+
+/// Unified time-series table for ALL sensor data.
+/// Replaces the old aquaponics_readings table.
+model SensorReading {
+  id          String     @id @default(cuid())
+  deviceId    String
+  device      Device     @relation(fields: [deviceId], references: [id])
+  sensorType  SensorType
+  value       Float
+  unit        String     @db.VarChar(20)
+  recordedAt  DateTime   // When the sensor actually measured
+  createdAt   DateTime   @default(now()) // When the DB row was inserted
+  metadata    Json?
+
+  @@index([deviceId, recordedAt])
+  @@index([recordedAt])
+  @@index([deviceId, sensorType])
+  @@index([sensorType, recordedAt])
+  @@map("sensor_readings")
+}
+
+/// Commands sent TO devices (open valve, start pump, arm deterrent).
+model ActuatorCommand {
+  id            String        @id @default(cuid())
+  deviceId      String
+  device        Device        @relation(fields: [deviceId], references: [id])
+  command       String
+  parameters    Json?
+  status        CommandStatus @default(PENDING)
+  issuedBy      String?
+  sentAt        DateTime?
+  acknowledgedAt DateTime?
+  executedAt    DateTime?
+  failureReason String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([deviceId, status])
+  @@index([status])
+  @@map("actuator_commands")
+}
+
+/// Triggered alerts from threshold breaches or anomaly detection.
+model Alert {
+  id             String        @id @default(cuid())
+  deviceId       String?
+  device         Device?       @relation(fields: [deviceId], references: [id])
+  alertRuleId    String?
+  alertRule      AlertRule?    @relation(fields: [alertRuleId], references: [id])
+  severity       AlertSeverity
+  status         AlertStatus   @default(ACTIVE)
+  title          String
+  message        String
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([severity, status])
+  @@index([status])
+  @@index([createdAt])
+  @@map("alerts")
+}
+
+/// Configurable rules: "if water_level < 15cm, trigger CRITICAL alert".
+model AlertRule {
+  id            String        @id @default(cuid())
+  name          String
+  zoneId        String?
+  zone          Zone?         @relation(fields: [zoneId], references: [id])
+  sensorType    SensorType
+  condition     String        // e.g. "lt", "gt", "eq", "between"
+  threshold     Float
+  thresholdHigh Float?        // For "between" condition
+  severity      AlertSeverity
+  cooldownMin   Int           @default(15)
+  enabled       Boolean       @default(true)
+  lastTriggered DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  alerts Alert[]
+
+  @@map("alert_rules")
+}
+
+/// Cross-domain connections. Polymorphic via sourceType/sourceId.
+/// Models: Solar→Battery, Chicken→Biodigester, Rain→Cistern→Aquaponics, etc.
+model ResourceFlow {
+  id              String   @id @default(cuid())
+  sourceType      String   // e.g. "SolarArray", "ChickenCoop", "RainwaterCistern"
+  sourceId        String
+  destinationType String   // e.g. "BatteryBank", "BiogasDigester", "AquaponicsSystem"
+  destinationId   String
+  resourceType    String   // e.g. "electricity", "manure", "water", "heat"
+  flowRate        Float?
+  unit            String?  @db.VarChar(20)
+  active          Boolean  @default(true)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sourceType, sourceId])
+  @@index([destinationType, destinationId])
+  @@map("resource_flows")
+}
+
+/// Key-value configuration store.
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+// ============================================================================
+// ENERGY DOMAIN
+// ============================================================================
+
+/// Solar panel array — panel count, wattage, MPPT, orientation.
+model SolarArray {
+  id            String   @id @default(cuid())
+  name          String
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  panelCount    Int
+  panelWattage  Int      // Watts per panel
+  totalWattage  Int      // Total array wattage
+  mpptModel     String?
+  tiltAngle     Float?
+  azimuth       Float?
+  installDate   DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("solar_arrays")
+}
+
+/// Battery bank — chemistry, capacity, cycle tracking.
+model BatteryBank {
+  id            String   @id @default(cuid())
+  name          String
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  chemistry     String   // e.g. "LiFePO4", "Li-ion", "Lead-Acid"
+  cellCount     Int
+  nominalVoltage Float
+  capacityAh    Float
+  capacityWh    Float
+  cycleCount    Int      @default(0)
+  maxCycles     Int?
+  installDate   DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("battery_banks")
+}
+
+/// Biogas digester — volume, feedstock, gas output.
+model BiogasDigester {
+  id                String   @id @default(cuid())
+  name              String
+  zoneId            String
+  zone              Zone     @relation(fields: [zoneId], references: [id])
+  volumeLiters      Float
+  feedstockTypes    Json     // Array of feedstock types
+  dailyGasOutputM3  Float?   // Target daily gas output in cubic meters
+  temperature       Float?   // Operating temperature
+  installDate       DateTime?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("biogas_digesters")
+}
+
+/// Wind turbine — rated power, type, cut-in speed.
+model WindTurbine {
+  id            String   @id @default(cuid())
+  name          String
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  ratedPowerW   Int
+  turbineType   String   // "vertical_axis" or "horizontal_axis"
+  cutInSpeedMs  Float    // Minimum wind speed to generate (m/s)
+  hubHeightM    Float?
+  bladeCount    Int?
+  installDate   DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("wind_turbines")
+}
+
+// ============================================================================
+// FOOD DOMAIN
+// ============================================================================
+
+/// Aquaponics system — fish tank, grow beds, species, crops.
+model AquaponicsSystem {
+  id             String   @id @default(cuid())
+  name           String
+  zoneId         String
+  zone           Zone     @relation(fields: [zoneId], references: [id])
+  fishTankVolL   Float    // Fish tank volume in liters
+  fishSpecies    Json?    // Array of species
+  growBedCount   Int
+  growBedType    String?  // e.g. "media-filled", "DWC", "NFT"
+  cropTypes      Json?    // Array of crop types
+  systemType     String?  // e.g. "media-based", "raft", "hybrid"
+  installDate    DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  harvestLogs HarvestLog[]
+
+  @@index([zoneId])
+  @@map("aquaponics_systems")
+}
+
+/// Food forest — area, plantings by layer.
+model FoodForest {
+  id         String   @id @default(cuid())
+  name       String
+  zoneId     String
+  zone       Zone     @relation(fields: [zoneId], references: [id])
+  areaSqM    Float    // Area in square meters
+  plantings  Json     // Array of { layer, species, count, plantedDate }
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  harvestLogs HarvestLog[]
+
+  @@index([zoneId])
+  @@map("food_forests")
+}
+
+/// Chicken coop — bird count, breed, automation, manure output.
+model ChickenCoop {
+  id            String   @id @default(cuid())
+  name          String
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  birdCount     Int
+  breed         String?
+  hasAutoDoor   Boolean  @default(false)
+  hasAutoFeeder Boolean  @default(false)
+  hasAutoWater  Boolean  @default(false)
+  manureOutputKgDay Float? // Daily manure output in kg
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  harvestLogs HarvestLog[]
+
+  @@index([zoneId])
+  @@map("chicken_coops")
+}
+
+/// Vertical garden — tower count, plant slots, irrigation.
+model VerticalGarden {
+  id             String   @id @default(cuid())
+  name           String
+  zoneId         String
+  zone           Zone     @relation(fields: [zoneId], references: [id])
+  towerCount     Int
+  plantSlots     Int
+  cropTypes      Json?    // Array of crop types
+  irrigationType String?  // e.g. "drip", "aeroponic", "wicking"
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  harvestLogs HarvestLog[]
+
+  @@index([zoneId])
+  @@map("vertical_gardens")
+}
+
+/// Mushroom cultivation — species, substrate, harvest cycle.
+model MushroomCultivation {
+  id              String   @id @default(cuid())
+  name            String
+  zoneId          String
+  zone            Zone     @relation(fields: [zoneId], references: [id])
+  species         String   // e.g. "oyster", "shiitake", "lion's mane"
+  substrateType   String   // e.g. "straw", "hardwood", "coffee grounds"
+  activeBags      Int
+  harvestCycleDays Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  harvestLogs HarvestLog[]
+
+  @@index([zoneId])
+  @@map("mushroom_cultivations")
+}
+
+/// Harvest log — polymorphic source, crop/product, quantity, quality.
+model HarvestLog {
+  id                     String               @id @default(cuid())
+  // Polymorphic source — optional FK to each food system
+  aquaponicsSystemId     String?
+  aquaponicsSystem       AquaponicsSystem?    @relation(fields: [aquaponicsSystemId], references: [id])
+  foodForestId           String?
+  foodForest             FoodForest?          @relation(fields: [foodForestId], references: [id])
+  chickenCoopId          String?
+  chickenCoop            ChickenCoop?         @relation(fields: [chickenCoopId], references: [id])
+  verticalGardenId       String?
+  verticalGarden         VerticalGarden?      @relation(fields: [verticalGardenId], references: [id])
+  mushroomCultivationId  String?
+  mushroomCultivation    MushroomCultivation? @relation(fields: [mushroomCultivationId], references: [id])
+  crop                   String               // What was harvested
+  quantityKg             Float
+  unit                   String               @default("kg")
+  qualityScore           Int?                 // 1-10 quality rating
+  harvestedAt            DateTime             @default(now())
+  notes                  String?
+  createdAt              DateTime             @default(now())
+
+  @@index([harvestedAt])
+  @@index([aquaponicsSystemId])
+  @@index([foodForestId])
+  @@index([chickenCoopId])
+  @@index([verticalGardenId])
+  @@index([mushroomCultivationId])
+  @@map("harvest_logs")
+}
+
+// ============================================================================
+// WATER DOMAIN
+// ============================================================================
+
+/// Rainwater cistern — capacity, catchment, first-flush.
+model RainwaterCistern {
+  id              String   @id @default(cuid())
+  name            String
+  zoneId          String
+  zone            Zone     @relation(fields: [zoneId], references: [id])
+  capacityLiters  Float
+  catchmentAreaSqM Float
+  hasFirstFlush   Boolean  @default(false)
+  material        String?  // e.g. "polyethylene", "concrete", "ferrocement"
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("rainwater_cisterns")
+}
+
+/// Greywater recycling system.
+model GreywaterSystem {
+  id                String   @id @default(cuid())
+  name              String
+  zoneId            String
+  zone              Zone     @relation(fields: [zoneId], references: [id])
+  dailyCapacityL    Float    // Daily processing capacity in liters
+  processingStages  Json     // Array of processing stage descriptions
+  outputUsage       String?  // e.g. "irrigation", "toilet flushing"
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("greywater_systems")
+}
+
+/// Biosand water filter.
+model BiosandFilter {
+  id            String    @id @default(cuid())
+  name          String
+  zoneId        String
+  zone          Zone      @relation(fields: [zoneId], references: [id])
+  flowRateLph   Float     // Flow rate in liters per hour
+  filterLayers  Json      // Array of layer descriptions
+  lastCleaned   DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([zoneId])
+  @@map("biosand_filters")
+}
+
+/// Atmospheric water generator.
+model AtmosphericWaterGen {
+  id                  String   @id @default(cuid())
+  name                String
+  zoneId              String
+  zone                Zone     @relation(fields: [zoneId], references: [id])
+  dailyOutputLiters   Float
+  powerSourceType     String?  // e.g. "solar", "grid", "battery"
+  minHumidityPct      Float    // Minimum humidity threshold (%)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("atmospheric_water_gens")
+}
+
+// ============================================================================
+// COMMS / AI DOMAIN
+// ============================================================================
+
+/// LoRa mesh network node.
+model LoraNode {
+  id              String   @id @default(cuid())
+  name            String
+  zoneId          String
+  zone            Zone     @relation(fields: [zoneId], references: [id])
+  networkAddress  String   @unique
+  frequencyMhz    Float
+  spreadingFactor Int
+  role            LoraRole
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([zoneId])
+  @@map("lora_nodes")
+}
+
+/// AI inference log — model usage, performance, domain served.
+model AiInferenceLog {
+  id            String   @id @default(cuid())
+  modelName     String
+  inputTokens   Int
+  outputTokens  Int
+  latencyMs     Int
+  purpose       String   // e.g. "anomaly_detection", "image_classification"
+  domainServed  Domain
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([domainServed])
+  @@index([createdAt])
+  @@map("ai_inference_logs")
+}
+
+// ============================================================================
+// DEFENSE DOMAIN
+// ============================================================================
+
+/// Security event — threat detection, AI confidence, response.
+model SecurityEvent {
+  id              String      @id @default(cuid())
+  threatLevel     ThreatLevel
+  eventType       String      // e.g. "perimeter_breach", "motion_detected", "thermal_anomaly"
+  aiConfidence    Float?      // 0.0 to 1.0
+  description     String
+  responseTaken   Json?       // Array of response actions
+  latitude        Float?
+  longitude       Float?
+  resolvedAt      DateTime?
+  createdAt       DateTime    @default(now())
+
+  @@index([threatLevel])
+  @@index([createdAt])
+  @@map("security_events")
+}
+
+/// Autonomous patrol rover.
+model PatrolRover {
+  id              String      @id @default(cuid())
+  name            String
+  status          RoverStatus @default(IDLE)
+  batteryPct      Float?
+  gpsLatitude     Float?
+  gpsLongitude    Float?
+  assignedRouteId String?
+  assignedRoute   PatrolRoute? @relation(fields: [assignedRouteId], references: [id])
+  totalDistanceKm Float       @default(0)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status])
+  @@map("patrol_rovers")
+}
+
+/// Patrol route — waypoints, distance, timing.
+model PatrolRoute {
+  id              String        @id @default(cuid())
+  name            String
+  waypoints       Json          // Array of { lat, lng, action? }
+  distanceKm      Float
+  estimatedTimeMin Int
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  rovers PatrolRover[]
+
+  @@map("patrol_routes")
+}
+
+/// Aerial recon drone.
+model ReconDrone {
+  id                String      @id @default(cuid())
+  name              String
+  status            DroneStatus @default(GROUNDED)
+  flightController  String?     // e.g. "Pixhawk", "Betaflight"
+  cameraType        String?     // e.g. "RGB", "thermal", "multispectral"
+  totalFlightHours  Float       @default(0)
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("recon_drones")
+}
+
+/// Deterrent system — LED, acoustic, fog, voice.
+model DeterrentSystem {
+  id              String        @id @default(cuid())
+  name            String
+  zoneId          String
+  zone            Zone          @relation(fields: [zoneId], references: [id])
+  deterrentType   DeterrentType
+  isArmed         Boolean       @default(false)
+  activationCount Int           @default(0)
+  lastActivatedAt DateTime?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([zoneId])
+  @@map("deterrent_systems")
+}
+
+// ============================================================================
+// WORKSHOP DOMAIN
+// ============================================================================
+
+/// Workshop equipment — 3D printers, CNC, electronics lab, etc.
+model WorkshopEquipment {
+  id                String        @id @default(cuid())
+  name              String
+  equipmentType     EquipmentType
+  zoneId            String
+  zone              Zone          @relation(fields: [zoneId], references: [id])
+  manufacturer      String?
+  model             String?
+  serialNumber      String?
+  runHours          Float         @default(0)
+  nextMaintenanceAt DateTime?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  maintenanceLogs MaintenanceLog[]
+
+  @@index([zoneId])
+  @@index([equipmentType])
+  @@map("workshop_equipment")
+}
+
+/// Inventory item — materials, parts, salvage tracking.
+model InventoryItem {
+  id              String            @id @default(cuid())
+  name            String
+  category        InventoryCategory
+  quantity        Float
+  unit            String            @default("pcs")
+  minStockLevel   Float?
+  costPerUnit     Float?
+  isSalvage       Boolean           @default(false)
+  location        String?           // Storage location description
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([category])
+  @@map("inventory_items")
+}
+
+/// Maintenance log — polymorphic target, status lifecycle, parts/cost.
+model MaintenanceLog {
+  id                   String            @id @default(cuid())
+  // Polymorphic — equipment FK (expandable to other targets)
+  workshopEquipmentId  String?
+  workshopEquipment    WorkshopEquipment? @relation(fields: [workshopEquipmentId], references: [id])
+  targetType           String             // e.g. "WorkshopEquipment", "PatrolRover", "SolarArray"
+  targetId             String             // ID of the target entity
+  status               MaintenanceStatus  @default(SCHEDULED)
+  description          String
+  partsUsed            Json?              // Array of { name, quantity, cost }
+  totalCost            Float?
+  scheduledAt          DateTime?
+  completedAt          DateTime?
+  recurrenceDays       Int?               // For recurring maintenance
+  nextDueAt            DateTime?
+  notes                String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([workshopEquipmentId])
+  @@map("maintenance_logs")
+}
+
+// ============================================================================
+// AUTH
+// ============================================================================
+
+/// System user — authentication and authorization.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  role         UserRole @default(VIEWER)
+  preferences  Json?    // UI preferences, notification settings, etc.
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}

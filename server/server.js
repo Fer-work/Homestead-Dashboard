@@ -3,9 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
-import routes from "./routes/index.js";
-// Import both the connection function AND the sequelize instance
-import sequelize, { connectToDatabase } from "./config/connection.js";
+import prisma from "./src/shared/prismaClient.js";
+import ingestionRoutes from "./src/shared/ingestion/routes.js";
+import aquaponicsRoutes from "./src/domains/food/routes.js";
 
 // Configurations
 dotenv.config();
@@ -22,22 +22,32 @@ app.use(cors());
 const PORT = process.env.PORT || 3001;
 
 // Routes
-app.use(routes);
+app.use("/api/ingest", ingestionRoutes);
+app.use("/api/aquaponics", aquaponicsRoutes);
 
-// Start server first, then connect to database in background
-app.listen(PORT, () => {
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "API is up and running!" });
+});
+
+// Start server, verify database connection
+app.listen(PORT, async () => {
   console.log(`Dragon Natura API Server listening on http://localhost:${PORT}`);
-  
-  // Connect to database in background (non-blocking)
-  connectToDatabase()
-    .then(() => {
-      console.log("Database connected successfully");
-      return sequelize.sync({ alter: true });
-    })
-    .then(() => {
-      console.log("Database synced successfully");
-    })
-    .catch((err) => {
-      console.error(`Database connection failed: ${err.message}`);
-    });
+
+  try {
+    await prisma.$connect();
+    console.log("Database connected successfully");
+  } catch (err) {
+    console.error(`Database connection failed: ${err.message}`);
+  }
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });

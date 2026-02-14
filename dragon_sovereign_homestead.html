@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Sovereign Homestead — Systems Blueprint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080c10;
+    --surface: #0d1117;
+    --surface2: #151b23;
+    --border: #1e2a3a;
+    --text: #c9d1d9;
+    --text-dim: #6e7681;
+    --gold: #d4a843;
+    --gold-dim: #8b7230;
+    --red: #c41e1e;
+    --green: #2ea043;
+    --green-dim: #1a5c2a;
+    --blue: #388bfd;
+    --blue-dim: #1a3d6e;
+    --cyan: #39d2c0;
+    --orange: #d18616;
+    --purple: #a371f7;
+    --solar: #f0c040;
+    --water: #4aa8d8;
+    --earth: #6b8e4e;
+    --fire: #d35400;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,168,67,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .hero p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 1rem 1rem;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: all 0.25s;
+    text-transform: uppercase;
+  }
+  .tab:hover { border-color: var(--gold-dim); color: var(--text); }
+  .tab.active { background: linear-gradient(135deg, var(--gold-dim), #5a4a20); border-color: var(--gold); color: white; }
+
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 3rem;
+  }
+
+  .system-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .system-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.5s ease both;
+  }
+  .system-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
+  }
+  .system-card:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .system-card .icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .system-card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+  }
+  .system-card p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 0.8rem;
+  }
+  .system-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .system-card li {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .system-card li::before {
+    content: '\u25B8';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+  }
+
+  .tier-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .tier-now { background: rgba(46,160,67,0.15); color: var(--green); border: 1px solid var(--green-dim); }
+  .tier-soon { background: rgba(56,139,253,0.15); color: var(--blue); border: 1px solid var(--blue-dim); }
+  .tier-future { background: rgba(163,113,247,0.1); color: var(--purple); border: 1px solid rgba(163,113,247,0.3); }
+
+  .cost-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    color: var(--gold);
+    background: rgba(212,168,67,0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 0.5rem;
+  }
+
+  .connections {
+    margin-top: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  .connections h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+  .flow-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid var(--gold);
+  }
+  .flow-item .flow-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .flow-item .flow-text { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
+  .flow-item strong { color: var(--text); }
+
+  .prompt-box {
+    margin-top: 2rem;
+    background: var(--surface2);
+    border: 1px solid var(--gold-dim);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  .prompt-box h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+  }
+  .prompt-box p {
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-intro {
+    text-align: center;
+    max-width: 700px;
+    margin: 1rem auto 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>\uD83D\uDC09 Dragon Sovereign Homestead</h1>
+  <p>Integrated Self-Sufficiency Systems Blueprint</p>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-view="overview">Overview</button>
+  <button class="tab" data-view="energy">Energy</button>
+  <button class="tab" data-view="food">Food</button>
+  <button class="tab" data-view="water">Water</button>
+  <button class="tab" data-view="comms">Comms & AI</button>
+  <button class="tab" data-view="defense">Defense</button>
+  <button class="tab" data-view="flows">System Flows</button>
+</div>
+
+<div class="main" id="content"></div>
+
+<script>
+var VIEWS = {
+  overview: {
+    intro: "Every system connects to every other system. Solar powers the aquaponics. Aquaponics feeds the biodigester. The biodigester produces gas for cooking and fertilizer for the food forest. The food forest feeds the community. The community sustains the mission. Nothing is wasted. Everything cycles.",
+    cards: [
+      { icon: "\u2600\uFE0F", title: "Energy Independence", color: "#f0c040", tier: "now", desc: "Solar panels + battery bank + biogas from organic waste. Three redundant energy sources, zero grid dependency.", items: ["400W-1kW solar array (rooftop)", "LiFePO4 battery bank (5-10kWh)", "Biogas digester (cooking gas from food waste)", "Micro-wind turbine (supplemental)"], cost: "$30,000-80,000 MXN" },
+      { icon: "\uD83C\uDF31", title: "Food Production", color: "#6b8e4e", tier: "now", desc: "Aquaponics + food forest + automated chicken coop + vertical gardens. Year-round production for household and community.", items: ["Aquaponics system (tilapia + vegetables)", "Food forest (fruit trees, herbs, perennials)", "Automated chicken coop (eggs + fertilizer)", "Vertical garden towers (leafy greens)", "Rotational composting system"], cost: "$20,000-60,000 MXN" },
+      { icon: "\uD83D\uDCA7", title: "Water Sovereignty", color: "#4aa8d8", tier: "now", desc: "Rainwater harvesting + greywater recycling + atmospheric water generation. Multiple sources, closed-loop usage.", items: ["Rainwater collection (roof catchment + cistern)", "Greywater filtration for irrigation", "Biosand filter for potable water", "Atmospheric water generator (humidity harvesting)"], cost: "$15,000-40,000 MXN" },
+      { icon: "\uD83D\uDCE1", title: "Communications & AI", color: "#388bfd", tier: "now", desc: "Mesh network + local AI server + encrypted comms. Information sovereignty \u2014 no dependency on ISPs or cloud services.", items: ["LoRa mesh network (2-10km range)", "Local AI server (Ollama + open-source LLM)", "Encrypted messaging (Matrix/Signal self-hosted)", "Offline knowledge library (Kiwix + Wikipedia)"], cost: "$20,000-50,000 MXN" },
+      { icon: "\uD83D\uDEE1\uFE0F", title: "Perimeter Defense", color: "#c41e1e", tier: "now", desc: "Sensor mesh + autonomous patrols + hardened core. Layered security with no single point of failure.", items: ["ESP32 thermal/visual sensor mesh", "Autonomous patrol rovers (x3-5)", "Fog/acoustic deterrent systems", "Reinforced safe room + escape routes"], cost: "$30,000-60,000 MXN" },
+      { icon: "\u2699\uFE0F", title: "Workshop & Fabrication", color: "#d18616", tier: "soon", desc: "3D printing + CNC + electronics lab. The ability to manufacture what you need, repair what you have, and invent what doesn\u2019t exist yet.", items: ["3D printer (FDM for prototyping)", "Small CNC mill or router", "Electronics workbench (soldering, oscilloscope)", "Welding station (MIG for steel fabrication)", "Parts inventory + salvage system"], cost: "$40,000-100,000 MXN" }
+    ]
+  },
+
+  energy: {
+    intro: "Energy is the foundation. Without independent power, every other system depends on the grid \u2014 and whoever controls the grid controls you. The goal: three redundant sources producing more than you consume, with storage to survive 3+ days of zero production.",
+    cards: [
+      { icon: "\u2600\uFE0F", title: "Solar Array", color: "#f0c040", tier: "now", desc: "The primary power source. Modern panels are cheap, durable, and can be installed without professional help.", items: ["4-8 x 100W panels (400-800W total)", "MPPT charge controller", "Expandable \u2014 start small, add panels as budget allows", "25+ year lifespan, minimal maintenance", "CFE interconnection legal in Mexico (net metering available)"], cost: "$15,000-40,000 MXN" },
+      { icon: "\uD83D\uDD0B", title: "Battery Storage", color: "#388bfd", tier: "now", desc: "LiFePO4 batteries are the gold standard: 3000+ charge cycles, safe, and dropping in price every year.", items: ["5-10kWh LiFePO4 bank", "Supports 2-3 days autonomy", "BMS (battery management system) \u2014 buildable with your skills", "Can be assembled from cells for 40-50% savings", "Monitor via ESP32 + custom dashboard"], cost: "$20,000-50,000 MXN" },
+      { icon: "\uD83D\uDCA8", title: "Biogas Digester", color: "#6b8e4e", tier: "now", desc: "Anaerobic digestion converts food waste and animal manure into methane for cooking and fertilizer for gardens. Closes the waste loop completely.", items: ["Simple design: IBC tank or underground chamber", "Feed with food scraps + chicken manure", "Produces 2-4 hours cooking gas daily", "Digestate = premium liquid fertilizer", "DIY build cost: $3,000-8,000 MXN"], cost: "$3,000-8,000 MXN" },
+      { icon: "\uD83C\uDF2C\uFE0F", title: "Micro Wind", color: "#39d2c0", tier: "soon", desc: "Supplemental power for coastal locations like L\u00e1zaro C\u00e1rdenas. Best for nighttime generation when solar is inactive.", items: ["Small vertical-axis turbine (100-400W)", "Charges batteries during windy nights", "Can be DIY-built with alternator + PVC blades", "Complements solar for 24-hour production", "Coastal location = good wind resource"], cost: "$5,000-15,000 MXN" },
+      { icon: "\uD83D\uDCCA", title: "Energy Management AI", color: "#a371f7", tier: "soon", desc: "An ESP32 or Raspberry Pi monitoring all energy flows, predicting consumption, and automatically routing power between sources and loads.", items: ["Real-time dashboard (production vs consumption)", "Automatic load shedding during low production", "Weather-based production forecasting", "Battery health monitoring + alerts", "Buildable with your MERN + IoT skills"], cost: "$2,000-5,000 MXN" }
+    ]
+  },
+
+  food: {
+    intro: "A sovereign homestead produces the majority of its calories. Not all of them \u2014 that\u2019s impractical for a single household. But enough that food is never a vulnerability. The key is integration: each system feeds another. Fish waste feeds plants. Plant scraps feed chickens. Chicken manure feeds the biodigester. Biodigester output feeds the food forest.",
+    cards: [
+      { icon: "\uD83D\uDC1F", title: "Aquaponics System", color: "#4aa8d8", tier: "now", desc: "Fish and vegetables in a closed loop. Tilapia thrive in tropical climates like L\u00e1zaro C\u00e1rdenas. The fish waste fertilizes the plants, the plants filter the water for the fish.", items: ["1000L fish tank (IBC tote) + grow beds", "Tilapia (fast-growing, heat-tolerant)", "Grow: lettuce, herbs, peppers, tomatoes, cucumber", "Automated feeding (ESP32 + servo + timer)", "Water quality monitoring (pH, ammonia, temp sensors)", "Produces protein + vegetables simultaneously"], cost: "$8,000-20,000 MXN" },
+      { icon: "\uD83C\uDF33", title: "Food Forest", color: "#6b8e4e", tier: "now", desc: "Multi-layer perennial food production. Once established (1-3 years), produces food with minimal ongoing labor. Perfect for tropical coastal climate.", items: ["Canopy: mango, avocado, coconut palm", "Mid-layer: banana, papaya, guava, citrus", "Shrub layer: chili peppers, coffee, cacao", "Ground cover: sweet potato, squash, herbs", "Nitrogen fixers: moringa, pigeon pea (feed the soil)", "Takes 2-3 years to establish, then 20+ years production"], cost: "$5,000-15,000 MXN (saplings + soil amendment)" },
+      { icon: "\uD83D\uDC14", title: "Automated Chicken Coop", color: "#d18616", tier: "now", desc: "Eggs daily, pest control, manure for biodigester, and entertainment. Automation handles the tedious parts.", items: ["8-12 laying hens = 6-10 eggs daily", "Auto door (servo + light sensor, open at dawn, close at dusk)", "Auto feeder (gravity-fed or ESP32-controlled dispenser)", "Auto water (float valve connected to rainwater system)", "Manure collection chute \u2192 biodigester", "Predator deterrent (motion-activated lights + sound)"], cost: "$3,000-8,000 MXN" },
+      { icon: "\uD83C\uDF3F", title: "Vertical Garden Towers", color: "#2ea043", tier: "now", desc: "High-density greens production in minimal space. Perfect for supplementing the restaurant with fresh herbs and leafy greens.", items: ["PVC tower gardens (DIY, $200-500 MXN each)", "Grow: cilantro, basil, lettuce, green onion, mint", "Drip irrigation from rainwater system", "Can produce for both household and restaurant", "Stackable \u2014 scale up in tiny spaces"], cost: "$2,000-5,000 MXN" },
+      { icon: "\uD83E\uDDA0", title: "Mushroom Cultivation", color: "#a371f7", tier: "now", desc: "Oyster mushrooms grow on coffee grounds and agricultural waste. High-value crop, minimal space, and feeds directly into your restaurant menu.", items: ["Grow bags or bucket tek (extremely cheap)", "Substrate: coffee grounds, straw, or sawdust (free/cheap)", "Harvest every 2-3 weeks per bag", "Premium ingredient for the restaurant", "Spent substrate \u2192 compost \u2192 food forest"], cost: "$1,000-3,000 MXN" },
+      { icon: "\uD83E\uDD16", title: "Agricultural Automation", color: "#388bfd", tier: "soon", desc: "Sensors and actuators that handle the repetitive tasks: watering, feeding, monitoring. Your mechatronics background makes this uniquely achievable.", items: ["Soil moisture sensors \u2192 auto irrigation valves", "Climate monitoring (temp, humidity, light)", "Growth timelapse cameras for optimization", "ESP32 dashboard for all agricultural systems", "Future: computer vision for pest/disease detection"], cost: "$5,000-15,000 MXN" }
+    ]
+  },
+
+  water: {
+    intro: "Water is the most underestimated sovereignty resource. A household uses 200-400 liters daily. L\u00e1zaro C\u00e1rdenas has a rainy season that can supply most of your annual needs if properly captured and stored. The rest comes from greywater recycling and humidity harvesting.",
+    cards: [
+      { icon: "\uD83C\uDF27\uFE0F", title: "Rainwater Harvesting", color: "#4aa8d8", tier: "now", desc: "Your roof is a collection surface. A 50m\u00B2 roof in L\u00e1zaro C\u00e1rdenas (avg 1000mm rainfall) captures ~50,000 liters annually. That\u2019s enough for a household with storage.", items: ["Gutters + first-flush diverter (removes initial debris)", "5,000-10,000L storage tank (rotoplas or ferro-cement)", "Gravity-fed distribution to household and gardens", "Overflow \u2192 groundwater recharge or aquaponics top-up", "Cost per liter stored: fraction of municipal water"], cost: "$5,000-15,000 MXN" },
+      { icon: "\u267B\uFE0F", title: "Greywater Recycling", color: "#6b8e4e", tier: "now", desc: "Water from sinks, showers, and laundry can be filtered and reused for irrigation. This alone can reduce water consumption by 30-50%.", items: ["Grease trap \u2192 settling tank \u2192 reed bed filter", "Output safe for garden/food forest irrigation", "Simple gravity-fed system, no pumps needed", "Reed bed doubles as habitat for beneficial insects", "Reduces load on municipal sewage system"], cost: "$3,000-8,000 MXN" },
+      { icon: "\uD83E\uDDEA", title: "Biosand Filter", color: "#39d2c0", tier: "now", desc: "Turns rainwater into potable (drinkable) water. A concrete box with layers of sand and gravel that removes 98%+ of bacteria. Used worldwide in developing regions.", items: ["Concrete or plastic container (~60L)", "Layers: fine sand, coarse sand, gravel", "Biological layer (schmutzdecke) develops naturally", "Flow rate: ~40L/hour", "Maintenance: occasional sand scraping", "UNESCO-proven technology, extremely reliable"], cost: "$500-2,000 MXN" },
+      { icon: "\uD83C\uDF2B\uFE0F", title: "Atmospheric Water Generator", color: "#a371f7", tier: "soon", desc: "Extracts water from humidity in the air. L\u00e1zaro C\u00e1rdenas\u2019 coastal humidity (often 70-90%) makes this highly viable. Can be solar-powered for full independence.", items: ["Peltier-based condenser (DIY achievable)", "Produces 2-10L/day depending on humidity", "Solar-powered for off-grid operation", "Backup water source during dry season", "Advanced: MOF (metal-organic framework) harvesting"], cost: "$5,000-15,000 MXN (DIY Peltier) or $30,000+ (commercial)" },
+      { icon: "\uD83D\uDCCA", title: "Water Management System", color: "#388bfd", tier: "now", desc: "Monitor all water flows: tank levels, filter status, consumption rates, and weather forecasting for harvest predictions.", items: ["Ultrasonic level sensors in all tanks", "Flow meters on main lines", "ESP32 dashboard with alerts", "Weather API integration for rain predictions", "Auto-valve control for distribution routing"], cost: "$2,000-5,000 MXN" }
+    ]
+  },
+
+  comms: {
+    intro: "Information sovereignty is as important as food and energy sovereignty. If your communication depends on a telecom company, your internet depends on an ISP, and your AI depends on a cloud service \u2014 you\u2019re not sovereign. Build your own.",
+    cards: [
+      { icon: "\uD83D\uDCE1", title: "LoRa Mesh Network", color: "#388bfd", tier: "now", desc: "Long-range, low-power radio communication between all your systems and neighboring allied nodes. No internet required. No telecom dependency.", items: ["LoRa modules: $50-100 MXN each", "Range: 2-10km line-of-sight, 1-3km urban", "Encrypted communication between nodes", "Carries sensor data, alerts, text messages", "Expandable to community-wide network", "Each neighbor with a node extends the range"], cost: "$3,000-10,000 MXN (10-20 nodes)" },
+      { icon: "\uD83E\uDDE0", title: "Local AI Server", color: "#a371f7", tier: "now", desc: "Run open-source language models on your own hardware. Private, offline, yours. Useful for coding assistance, document analysis, recipe development, and business operations.", items: ["Hardware: PC with RTX 3060+ GPU ($8,000-15,000 MXN used)", "Software: Ollama + Llama/Mistral models", "Runs fully offline \u2014 no internet needed", "Fine-tune on your own business data", "Private: no data leaves your property", "Your own AI assistant, permanently"], cost: "$10,000-25,000 MXN" },
+      { icon: "\uD83D\uDD12", title: "Encrypted Communications", color: "#39d2c0", tier: "now", desc: "Self-hosted messaging and file sharing that doesn\u2019t go through WhatsApp, Google, or any third-party server.", items: ["Matrix/Synapse server (self-hosted, encrypted)", "Accessible via phone apps (Element)", "File sharing without cloud dependency", "Voice/video calls within your network", "Can bridge to external services when needed"], cost: "$3,000-8,000 MXN (runs on same server as AI)" },
+      { icon: "\uD83D\uDCDA", title: "Offline Knowledge Library", color: "#d18616", tier: "now", desc: "All of Wikipedia, medical references, engineering manuals, agricultural guides \u2014 stored locally, searchable, available even if the internet disappears.", items: ["Kiwix: full offline Wikipedia (~90GB)", "Survival/medical/engineering reference libraries", "Educational content for community training", "Runs on Raspberry Pi ($1,500 MXN)", "Add your own content: recipes, manuals, codex"], cost: "$2,000-4,000 MXN" },
+      { icon: "\uD83C\uDF10", title: "Independent Internet Backup", color: "#6e7681", tier: "soon", desc: "When you do need internet, have alternatives to the main ISP. Starlink, cellular failover, or community-shared uplinks.", items: ["Starlink: satellite internet ($10,000 setup + $1,100/month)", "Cellular failover (secondary SIM, auto-switching)", "Community internet co-op (shared connection, mesh distribution)", "VPN for all outbound traffic (privacy layer)", "Bandwidth-aware routing between sources"], cost: "$10,000-20,000 MXN setup" }
+    ]
+  },
+
+  defense: {
+    intro: "Defense is the shield that protects everything else. Not aggression \u2014 the ability to see threats coming, deter casual hostility, survive serious threats, and recover from anything. Every layer buys time for the next.",
+    cards: [
+      { icon: "\uD83D\uDC41\uFE0F", title: "Sensor Mesh (Layer 1)", color: "#388bfd", tier: "now", desc: "You can\u2019t defend what you can\u2019t see. 20-30 sensor nodes creating persistent awareness of everything within your perimeter.", items: ["ESP32 + PIR motion + thermal (FLIR Lepton)", "Acoustic sensors (MEMS microphone arrays)", "AI anomaly detection on edge devices", "LoRa communication between all nodes", "Central dashboard with zone mapping", "Battery + solar powered (self-sustaining)"], cost: "$15,000-25,000 MXN" },
+      { icon: "\uD83D\uDEA8", title: "Deterrence Systems (Layer 2)", color: "#d18616", tier: "now", desc: "Make your location look like more trouble than it\u2019s worth. Automated responses that activate before any human intervention is needed.", items: ["Motion-triggered high-intensity LED floods", "Directional acoustic deterrent (piezo array)", "Theatrical fog cannons (glycol fogger + solenoid)", "Automated voice warnings (speaker array)", "All triggered by Layer 1 sensor mesh"], cost: "$8,000-15,000 MXN" },
+      { icon: "\uD83E\uDD16", title: "Autonomous Patrol (Layer 3)", color: "#39d2c0", tier: "now", desc: "Small wheeled robots that patrol defined routes, streaming video and sensor data back to base. Force multiplier \u2014 one person monitors what would normally require five.", items: ["4WD RC chassis + Raspberry Pi + camera", "GPS waypoint navigation for patrol routes", "Night vision (IR illumination + NoIR camera)", "LoRa communication to mesh network", "Automatic return-to-base for charging", "Build 3-5 for full perimeter coverage"], cost: "$15,000-30,000 MXN (fleet of 3-5)" },
+      { icon: "\uD83C\uDFF0", title: "Hardened Core (Layer 4)", color: "#c41e1e", tier: "now", desc: "One room that can\u2019t be breached easily. Independent power, comms, and air. The last resort that buys time for evacuation or response.", items: ["Steel-reinforced door + frame in concrete", "Electromagnetic locks (600lb force, fail-secure)", "Independent battery + solar (48-72hr autonomy)", "Satellite phone or ham radio (independent comms)", "Positive pressure ventilation (filtered air intake)", "Emergency supplies for 72 hours"], cost: "$15,000-30,000 MXN" },
+      { icon: "\uD83D\uDEE9\uFE0F", title: "Aerial Reconnaissance", color: "#a371f7", tier: "soon", desc: "Autonomous drones that launch on trigger, survey the area, and return to charge. Eyes in the sky on demand.", items: ["Custom quad with Pixhawk flight controller", "Thermal + visual camera payload", "Auto-launch from weatherproof charging pad", "Pre-programmed survey patterns", "Live stream to command dashboard", "Return-to-base on low battery or mission complete"], cost: "$10,000-25,000 MXN per drone" },
+      { icon: "\uD83D\uDD73\uFE0F", title: "Escape Infrastructure (Layer 5)", color: "#6e7681", tier: "future", desc: "The ability to leave when staying is no longer safe. Pre-planned routes, pre-positioned supplies, and physical infrastructure for evacuation.", items: ["Concealed secondary exit from safe room", "Pre-positioned go-bags at multiple locations", "Pre-planned evacuation routes (primary + alternates)", "Communication protocol with trusted allies", "Future: tunnel network to secondary facility"], cost: "Variable" }
+    ]
+  },
+
+  flows: {
+    intro: "The genius of a sovereign homestead isn\u2019t any single technology \u2014 it\u2019s how they all connect. Here are the key resource flows that make the whole system more than the sum of its parts."
+  }
+};
+
+var FLOWS = [
+  { icon: "\u2600\uFE0F\u2192\uD83D\uDD0B\u2192\u2699\uFE0F", title: "Solar \u2192 Battery \u2192 Everything", text: "Solar panels charge the battery bank. Battery powers all electronic systems: sensor mesh, AI server, aquaponics pumps, chicken coop automation, communication network, and the workshop. <strong>One energy source sustains every other system.</strong>" },
+  { icon: "\uD83D\uDC14\u2192\uD83D\uDCA9\u2192\uD83D\uDD25\u2192\uD83C\uDF31", title: "Chickens \u2192 Manure \u2192 Biogas + Fertilizer \u2192 Food Forest", text: "Chicken manure goes into the biodigester along with food scraps. The digester produces methane (cooking gas for the restaurant) and digestate (liquid fertilizer for the food forest and aquaponics). <strong>Your waste becomes your fuel and your fertilizer.</strong>" },
+  { icon: "\uD83C\uDF27\uFE0F\u2192\uD83D\uDCA7\u2192\uD83D\uDC1F\u2192\uD83C\uDF3F", title: "Rain \u2192 Cistern \u2192 Aquaponics \u2192 Gardens", text: "Rainwater fills the cistern. Cistern feeds the aquaponics fish tank. Fish waste-enriched water circulates to grow beds. Overflow irrigates the food forest and vertical gardens. <strong>One raindrop does four jobs.</strong>" },
+  { icon: "\uD83C\uDF3F\u2192\uD83C\uDF54\u2192\uD83D\uDCB0\u2192\u2600\uFE0F", title: "Food Production \u2192 Restaurant \u2192 Revenue \u2192 More Systems", text: "Herbs, vegetables, and tilapia from your homestead reduce restaurant ingredient costs. Restaurant revenue funds the next round of sovereignty infrastructure. <strong>The business and the homestead feed each other.</strong>" },
+  { icon: "\uD83D\uDCE1\u2192\uD83E\uDDE0\u2192\uD83D\uDCCA\u2192\uD83D\uDCA1", title: "Sensors \u2192 Local AI \u2192 Analysis \u2192 Optimization", text: "All sensor data (energy production, water levels, soil moisture, security alerts, aquaponics chemistry) flows to your local AI server. The AI identifies patterns, predicts problems, and suggests optimizations. <strong>Your homestead gets smarter over time without sending data to anyone.</strong>" },
+  { icon: "\uD83D\uDEE1\uFE0F\u2192\uD83D\uDC41\uFE0F\u2192\uD83D\uDCE1\u2192\uD83C\uDFD8\uFE0F", title: "Defense \u2192 Awareness \u2192 Network \u2192 Community", text: "Your sensor mesh doesn\u2019t just protect you \u2014 it can extend to trusted neighbors, creating a shared awareness network. When one node detects a threat, all nodes know. <strong>Sovereignty scales from household to community.</strong>" }
+];
+
+function renderCards(viewKey) {
+  var view = VIEWS[viewKey];
+  var html = '';
+  if (view.intro) {
+    html += '<p class="section-intro">' + view.intro + '</p>';
+  }
+
+  if (viewKey === 'flows') {
+    html += '<div class="connections">';
+    html += '<h3>Resource Flow Cycles</h3>';
+    for (var i = 0; i < FLOWS.length; i++) {
+      var f = FLOWS[i];
+      html += '<div class="flow-item" style="animation-delay:' + (i * 0.08) + 's">';
+      html += '<span class="flow-icon">' + f.icon + '</span>';
+      html += '<div class="flow-text"><strong>' + f.title + '</strong><br>' + f.text + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="prompt-box">';
+    html += '<h3>\uD83C\uDFA8 Image Generation Prompt</h3>';
+    html += '<p>"Aerial isometric illustration of a sovereign homestead compound in a tropical coastal Mexican setting. Solar panels on rooftops catching golden sunlight. Aquaponics greenhouse with fish tanks and lush green grow beds. A food forest with mango, banana, and avocado trees surrounding the property. Small automated chicken coop with a robotic feeder. Rainwater collection tanks connected by pipes to gardens. A biogas digester partially underground. A workshop with open doors showing 3D printers and electronics workbenches. Small wheeled patrol robots on pathways. A LoRa antenna on the highest point. A central building with warm light glowing from windows showing a command dashboard on screens. The aesthetic is solarpunk \u2014 high-tech but organic, green but powerful, peaceful but defended. Dragon motifs subtly integrated into the architecture. Dawn light, warm golden hour tones with deep green vegetation. Detailed, technical, beautiful."</p>';
+    html += '</div>';
+
+    return html;
+  }
+
+  if (view.cards) {
+    html += '<div class="system-grid">';
+    for (var j = 0; j < view.cards.length; j++) {
+      var c = view.cards[j];
+      var tierLabel = c.tier === 'now' ? 'Buildable Now' : c.tier === 'soon' ? '6-12 Months' : '1-3 Years';
+      var tierClass = 'tier-' + c.tier;
+      html += '<div class="system-card" style="animation-delay:' + (j * 0.08) + 's">';
+      html += '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:' + c.color + ';border-radius:10px 10px 0 0;"></div>';
+      html += '<span class="icon">' + c.icon + '</span>';
+      html += '<span class="tier-badge ' + tierClass + '">' + tierLabel + '</span>';
+      html += '<h3 style="color:' + c.color + '">' + c.title + '</h3>';
+      html += '<p>' + c.desc + '</p>';
+      html += '<ul>';
+      for (var k = 0; k < c.items.length; k++) {
+        html += '<li>' + c.items[k] + '</li>';
+      }
+      html += '</ul>';
+      if (c.cost) html += '<span class="cost-tag">' + c.cost + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function showView(key) {
+  var btns = document.querySelectorAll('.tab');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  var active = document.querySelector('[data-view="' + key + '"]');
+  if (active) active.classList.add('active');
+  document.getElementById('content').innerHTML = renderCards(key);
+}
+
+document.getElementById('tabs').addEventListener('click', function(e) {
+  var btn = e.target;
+  while (btn && !btn.dataset.view) btn = btn.parentElement;
+  if (btn && btn.dataset.view) showView(btn.dataset.view);
+});
+
+showView('overview');
+</script>
+</body>
+</html>
