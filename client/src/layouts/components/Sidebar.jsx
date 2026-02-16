@@ -13,7 +13,6 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '@mui/material/styles'
 import navConfig from '../../routes/navConfig.js'
-import logo from '../../assets/Quetzal.png'
 
 const DRAWER_WIDTH = 260
 const DRAWER_COLLAPSED = 72
@@ -30,16 +29,14 @@ export default function Sidebar({ open, collapsed, onClose }) {
 
   const drawerContent = (
     <Box sx={{ overflow: 'auto' }}>
-      <Toolbar sx={{ gap: 1.5, px: collapsed && !isMobile ? 1.5 : 2, justifyContent: collapsed && !isMobile ? 'center' : 'flex-start' }}>
-        <Box
-          component="img"
-          src={logo}
-          alt="Logo"
-          sx={{ width: 36, height: 36, flexShrink: 0 }}
-        />
-        {(!collapsed || isMobile) && (
+      <Toolbar sx={{ px: collapsed && !isMobile ? 1.5 : 2, justifyContent: collapsed && !isMobile ? 'center' : 'flex-start' }}>
+        {(!collapsed || isMobile) ? (
           <Typography variant="subtitle1" fontWeight={700} noWrap>
             Dragon Sovereign
+          </Typography>
+        ) : (
+          <Typography variant="subtitle1" fontWeight={700} noWrap>
+            DS
           </Typography>
         )}
       </Toolbar>
