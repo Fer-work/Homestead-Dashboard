@@ -1,75 +1,86 @@
-# Project: Dragon Natura Homestead - Intelligent Monitoring System
+# Dragon Sovereign Homestead — Integrated Self-Sufficiency Dashboard
 
-## 🌱 Vision
+## Vision
 
-Dragon Natura Homestead is a comprehensive monitoring system designed for the modern homesteader aiming for self-sufficiency and a deeper connection with their environment and food production systems. This project starts with a passion for sustainable living and leveraging technology to make homestead management more efficient, data-driven, and insightful.
+Dragon Sovereign Homestead is a comprehensive monitoring, control, and automation platform for a fully integrated, self-sufficient homestead. The philosophy is solarpunk: high-tech but organic, green but powerful, peaceful but defended.
 
-The initial goal is to develop a robust system for monitoring key aspects of a small-scale urban aquaponics prototype, with plans to expand to larger, more diverse homesteading operations. While this begins as a personal tool, the journey and the core monitoring framework will be documented with the hope of inspiring and assisting fellow homesteaders who are interested in integrating technology into their practices.
+Every system connects to every other system. Solar powers the aquaponics. Aquaponics feeds the biodigester. The biodigester produces gas for cooking and fertilizer for the food forest. The food forest feeds the community. The community sustains the mission. Nothing is wasted. Everything cycles.
 
-_(This README focuses on the monitoring aspects of the project, which are intended for broader sharing and discussion. Specific advanced security deterrents developed for personal use are outside the scope of this public documentation.)_
+This project starts with software architecture and data modeling, with hardware integration rolling out as prototypes come online. The full systems blueprint is documented in `dragon_sovereign_homestead.html`.
 
-## ✨ Core Monitoring Features (Stage 1 Focus)
+## Domains
 
-- **Aquaponics System Monitoring:**
-  - Real-time tracking of water pH, EC/TDS (Electrical Conductivity/Total Dissolved Solids).
-  - Water temperature monitoring for fish tanks, sump, and grow beds.
-  - Dissolved Oxygen (DO) levels for aquatic health.
-  - Water level sensing for tanks and sump (with alerts for low/high conditions).
-  - Monitoring of pump operational status.
-- **Environmental Monitoring:**
-  - Ambient temperature and humidity tracking for the plot/greenhouse environment.
-- **Power System Monitoring (for Off-Grid Setup):**
-  - Solar panel energy production.
-  - Battery bank voltage, current, and state of charge.
-  - Overall energy consumption by the homestead systems.
-- **Centralized Web Dashboard:**
-  - Intuitive visualization of all sensor data with charts and real-time readouts.
-  - Customizable alert notifications for critical parameter deviations.
-  - Historical data logging and trend analysis.
-  - Accessible remotely to check on systems.
+The homestead is organized into six interconnected domains:
 
-## 🛠️ Technology Stack (Planned)
+### Energy Independence
+Solar panels, LiFePO4 battery bank, biogas digester, and micro-wind turbine. Three redundant energy sources, zero grid dependency. An energy management AI monitors all flows, predicts consumption, and routes power automatically.
 
-- **Frontend:** React with Material UI (for a responsive and modern user interface).
-- **Backend:** Node.js with Express.js.
-- **Database:** PostgreSQL (using PERN stack principles, potentially with TimescaleDB extension for time-series data). _(Initial prototyping may use MongoDB/MERN stack before transitioning)._
-- **IoT Devices & Microcontrollers:**
-  - ESP32 modules for distributed sensor data collection and actuator control.
-  - Raspberry Pi as an on-plot central hub/gateway for data aggregation, local processing, video (future), and communication.
-  - Various sensors for environmental and system parameters.
-- **Communication Protocols:** MQTT for robust IoT messaging, HTTPS for API communication, (potentially WebSockets for real-time dashboard updates).
-- **Cloud Services (Potential for Database Hosting/Notifications):** Exploring options like Neon.tech for PostgreSQL, and cloud-based notification services.
+### Food Production
+Aquaponics (tilapia + vegetables), food forest (mango, avocado, banana, citrus), automated chicken coop (eggs + fertilizer), vertical garden towers (leafy greens), and mushroom cultivation. Year-round production for household and restaurant.
 
-## High-Level Overview
+### Water Sovereignty
+Rainwater harvesting (roof catchment + cistern), greywater recycling for irrigation, biosand filtration for potable water, and atmospheric water generation via solar-powered Peltier condensers. Multiple sources, closed-loop usage.
+
+### Communications & AI
+LoRa mesh network (2-10km range, no ISP dependency), local AI server (Ollama + open-source LLMs), self-hosted encrypted messaging (Matrix/Signal), and an offline knowledge library (Kiwix + Wikipedia). Full information sovereignty.
+
+### Perimeter Defense
+ESP32 thermal/visual sensor mesh, automated deterrence systems (lights, acoustic, fog), autonomous patrol rovers, reinforced safe room, and aerial reconnaissance drones. Layered security with no single point of failure.
+
+### Workshop & Fabrication
+3D printing, CNC milling, electronics workbench, welding station, and parts inventory. The ability to manufacture, repair, and invent.
+
+## System Flows
+
+The value of the homestead is in the interconnections:
+
+- **Solar -> Battery -> Everything** — One energy source sustains every other system.
+- **Chickens -> Manure -> Biogas + Fertilizer -> Food Forest** — Waste becomes fuel and fertilizer.
+- **Rain -> Cistern -> Aquaponics -> Gardens** — One raindrop does four jobs.
+- **Food Production -> Restaurant -> Revenue -> More Systems** — The business and the homestead feed each other.
+- **Sensors -> Local AI -> Analysis -> Optimization** — The homestead gets smarter over time without sending data to anyone.
+- **Defense -> Awareness -> Network -> Community** — Sovereignty scales from household to community.
+
+## Technology Stack
+
+- **Frontend:** React 19 + Vite + Material UI 7 + Redux Toolkit (RTK Query) + Nivo charts
+- **Backend:** Node.js + Express 5 + Prisma ORM
+- **Database:** PostgreSQL (hosted on Neon.tech)
+- **IoT Layer:** ESP32 sensors -> MQTT -> Raspberry Pi gateway -> REST API / WebSockets
+- **Communication Protocols:** MQTT for IoT messaging, HTTPS for API, WebSockets for real-time dashboard updates, LoRa for mesh networking
+
+## Architecture
 
 The system is designed with a layered approach:
 
-1.  **Sensing Layer:** Various sensors (pH, temperature, water level, motion, power, etc.) are deployed across the aquaponics system, power system, and general plot environment.
-2.  **Microcontroller Layer:** ESP32 modules collect data from these sensors, perform initial processing if needed, and can control local actuators (e.g., pumps based on aquaponics logic).
-3.  **Plot Hub/Gateway Layer:** A Raspberry Pi located on the plot acts as a central hub. It gathers data from all ESP32 nodes (likely via a local MQTT broker), manages local data logging for resilience, processes local video (future), and serves as the secure gateway to the external network (neighbor's Wi-Fi, then to the cloud/apartment server).
-4.  **Backend Server Layer:** A Node.js/Express.js application (running in the cloud or self-hosted in the apartment) receives data from the Plot Hub. It handles data validation, storage in the PostgreSQL database, user authentication, API logic for the dashboard, and alert processing.
-5.  **Frontend Dashboard Layer:** A React-based web application provides the user interface for monitoring all systems, viewing historical data, configuring settings, and receiving alerts.
+1. **Sensing Layer** — Sensors (pH, temperature, water level, motion, power, etc.) deployed across all domains.
+2. **Microcontroller Layer** — ESP32 modules collect sensor data, perform edge processing, and control local actuators.
+3. **Gateway Layer** — Raspberry Pi aggregates data from ESP32 nodes via MQTT, manages local logging, and serves as the secure network gateway.
+4. **Backend Layer** — Node.js/Express API handles data validation, storage via Prisma + PostgreSQL, authentication, alert processing, and actuator command dispatch.
+5. **Dashboard Layer** — React SPA provides real-time visualization, historical analysis, system control, and alert management across all domains.
 
-## 🚀 Project Status
+## Project Status
 
-- **Current Phase:** Remote Research & Development (R&D) - June/July [Current Year]
-  - Focus on prototyping core software components (dashboard, backend APIs).
-  - Testing sensor integration with ESP32s and Raspberry Pi.
-  - Designing and testing solar power solutions for off-grid plot electronics.
-- **Next Phase:** On-site deployment and development of Stage 1 Urban Prototype (8m x 12m plot).
+- **Current Phase:** Foundation — designing ERD, domain architecture, and vertical slice plan.
+- **Implemented:** Aquaponics water level monitoring (sensor ingestion -> storage -> dashboard with charts).
+- **In Progress:** Sequelize to Prisma migration, full database schema design across all six domains.
+- **Next:** Shared infrastructure (auth, sensor pipeline, alert engine), then domain-by-domain vertical slices.
 
-## Future Goals - Publicly Shareable Aspects
+## Development Approach
 
-- Complete and refine the Stage 1 urban aquaponics monitoring prototype.
-- Develop a robust, user-friendly dashboard with comprehensive data visualization and alert management.
-- Expand monitoring to include soil moisture, light levels, and other environmental factors relevant to broader gardening/homesteading.
-- Integrate basic automation logic for aquaponics system management (e.g., automated fish feeding, water top-offs) based on sensor readings.
-- **Share the Journey:** Create a YouTube video series documenting the build process, challenges, and successes of the Stage 1 prototype and beyond (focusing on the monitoring systems and DIY aquaponics).
-- Develop simplified guides or open-source components (e.g., ESP32 sensor modules for specific homesteading tasks) if there's community interest.
-- Explore integrating machine learning for predictive analytics (e.g., predicting crop issues, optimizing energy use).
+- **Schema-first** — All entities and relationships defined in Prisma before application code.
+- **Vertical slices** — Each feature delivers a complete capability across the full stack (sensor -> API -> database -> dashboard) rather than building layers horizontally.
+- **Domain blueprints** — Each domain is documented with its entities, data flows, and connections to other domains before implementation begins.
 
-## 🤝 Contributing & Contact
+## Future Goals
 
-Currently, this is a personal project under development. However, I'm passionate about sharing knowledge and learning from the community. Future updates on progress and potential ways to collaborate or share designs will be posted if the project evolves in that direction.
+- Complete the full-stack monitoring and control platform across all six domains.
+- Deploy hardware prototypes with ESP32 sensor networks and Raspberry Pi gateways.
+- Integrate machine learning for predictive analytics (crop health, energy optimization, anomaly detection).
+- Build community mesh networking for shared awareness across allied homesteads.
+- Document the build process via YouTube series covering DIY aquaponics, solar, IoT, and homestead automation.
+- Open-source reusable components (ESP32 sensor modules, dashboard widgets) for the homesteading community.
 
-Stay tuned for updates as the Dragon Natura Homestead takes root!
+## Contributing
+
+This is a personal project under active development. The journey and framework will be documented for fellow homesteaders interested in integrating technology into self-sufficient living.

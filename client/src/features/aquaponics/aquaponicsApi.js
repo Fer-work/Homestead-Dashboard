@@ -1,27 +1,21 @@
-// features/aquaponics/aquaponicsApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { baseApi } from '../../app/baseApi.js'
 
-export const aquaponicsApi = createApi({
-  reducerPath: 'aquaponicsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/aquaponics',
-  }),
-  tagTypes: ['WaterLevel', 'AquaponicsStats'],
+const aquaponicsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLatestWaterLevel: builder.query({
-      query: () => '/waterlevel/latest',
+      query: () => '/aquaponics/waterlevel/latest',
       providesTags: ['WaterLevel'],
     }),
     getAllWaterLevels: builder.query({
-      query: () => '/waterlevel/all',
+      query: () => '/aquaponics/waterlevel/all',
       providesTags: ['WaterLevel'],
     }),
     getWaterLevelHistory: builder.query({
-      query: (hours = 24) => `/waterlevel/history?hours=${hours}`,
+      query: (hours = 24) => `/aquaponics/waterlevel/history?hours=${hours}`,
       providesTags: ['WaterLevel'],
     }),
     getAquaponicsStats: builder.query({
-      query: () => '/stats',
+      query: () => '/aquaponics/stats',
       providesTags: ['AquaponicsStats'],
     }),
   }),

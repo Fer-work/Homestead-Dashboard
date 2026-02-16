@@ -115,7 +115,7 @@ const WaterLevelGauge = ({ refreshInterval = 30000 }) => {
 
   const currentReading = latestData?.data;
   const stats = statsData?.data;
-  const currentLevel = currentReading ? parseFloat(currentReading.numeric_value) : 0;
+  const currentLevel = currentReading ? currentReading.value : 0;
   const status = stats?.status || 'unknown';
   
   // Convert cm to percentage (assuming 0-150cm range)
@@ -176,9 +176,9 @@ const WaterLevelGauge = ({ refreshInterval = 30000 }) => {
           )}
 
           {/* Last Updated */}
-          {currentReading?.created_at && (
+          {currentReading?.recordedAt && (
             <Typography variant="caption" color="text.secondary" textAlign="center">
-              Last updated: {formatDate(currentReading.created_at)}
+              Last updated: {formatDate(currentReading.recordedAt)}
             </Typography>
           )}
 

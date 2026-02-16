@@ -1,0 +1,16 @@
+export const PATHS = {
+  LOGIN: '/login',
+  REGISTER: '/register',
+  OVERVIEW: '/',
+  ENERGY: '/energy',
+  AQUAPONICS: '/aquaponics',
+  WATER: '/water',
+  COMMS: '/comms',
+  DEFENSE: '/defense',
+  WORKSHOP: '/workshop',
+  ALERTS: '/alerts',
+  DEVICES: '/devices',
+  DEVICE_DETAIL: '/devices/:id',
+  VIDEO: '/video',
+  SETTINGS: '/settings',
+}

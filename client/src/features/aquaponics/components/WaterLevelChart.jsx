@@ -65,8 +65,8 @@ const WaterLevelChart = ({ height = 300 }) => {
     id: 'water_level',
     color: '#2196f3',
     data: readings.map(reading => ({
-      x: new Date(reading.created_at),
-      y: parseFloat(reading.numeric_value)
+      x: new Date(reading.recordedAt),
+      y: reading.value
     }))
   }];
 

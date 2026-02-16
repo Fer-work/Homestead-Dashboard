@@ -10,7 +10,20 @@
       "Bash(taskkill:*)",
       "Bash(node:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(wc:*)",
+      "Bash(git -C \"C:/Users/ferwo/Projects/Homestead-Dashboard\" log --oneline --all)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\" npx prisma migrate:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(openssl rand:*)",
+      "Bash(npx vite build:*)",
+      "Bash(python -m json.tool:*)"
     ],
     "deny": [],
     "ask": []
